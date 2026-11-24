@@ -99,7 +99,7 @@ const pl=$('#pl');const draw=()=>{pl.innerHTML=S.players.map((p,i)=>`<div class=
 pl.querySelectorAll('input').forEach(e=>e.oninput=()=>{S.players[e.dataset.i]=e.value;save();chk()});
 pl.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.players.splice(b.dataset.r,1);while(S.players.length<3)S.players.push('');save();draw();chk()});$('#add').disabled=S.players.length>=12};
 const chk=()=>$('#go').disabled=names().length<3||!Object.values(S.cats).some(Boolean);
-const names=()=>S.players.map(s=>s.trim()).filter(Boolean);
+const names=()=>S.players.map((s,i)=>s.trim()||"Player "+(i+1));
 draw();$('#add').onclick=()=>{S.players.push('');save();draw();pl.querySelectorAll('input')[S.players.length-1].focus()};
 $('#cats').innerHTML=['mild','spicy','wild'].map(c=>`<button class=chip data-c=${c} aria-pressed=${S.cats[c]}>${c[0].toUpperCase()+c.slice(1)}</button>`).join('');
 document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.cats[b.dataset.c]=!S.cats[b.dataset.c];b.setAttribute('aria-pressed',S.cats[b.dataset.c]);save();chk()});
@@ -113,7 +113,7 @@ function settings(){app.innerHTML=`<div class=top><button class=link id=bk>← B
 <div class=panel><h2>Voting</h2><button class=chip id=sf aria-pressed=${S.self}>Allow voting for yourself: ${S.self?'on':'off'}</button></div>`;
 $('#bk').onclick=home;document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.theme=b.dataset.t;save();applyTheme();settings()});
 $('#sf').onclick=()=>{S.self=!S.self;save();settings()}}
-function start(){const players=S.players.map(s=>s.trim()).filter(Boolean);
+function start(){const players=S.players.map((s,i)=>s.trim()||"Player "+(i+1));
 let pool=[];for(const c of Object.keys(S.cats))if(S.cats[c])pool=pool.concat(PROMPTS[c]);
 pool=shuffle(pool).slice(0,Math.min(S.rounds,pool.length));
 G={players,pool,i:0,voter:0,votes:[],score:players.map(()=>0)};prompt_()}
