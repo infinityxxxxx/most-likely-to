@@ -33,7 +33,19 @@ h2{margin:0;font-size:15px;color:var(--dim);font-weight:600;text-transform:upper
 .chip{padding:9px 13px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:15px}
 .chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on);font-weight:600}
 .stage{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;text-align:center}
-.stage.enter>*{animation:in 250ms var(--out)}
+.stage.enter>*{animation:in 320ms var(--out) both}
+.stage.enter>*:nth-child(2){animation-delay:70ms}.stage.enter>*:nth-child(3){animation-delay:140ms}.stage.enter>*:nth-child(4){animation-delay:210ms}
+.stage.enter .big{animation:pop 520ms cubic-bezier(.34,1.56,.64,1) 120ms both}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes grow{from{width:0}}
+.bar i{animation:grow 650ms var(--out) both;animation-delay:calc(var(--d,0)*90ms + 250ms)}
+.names button{animation:in 300ms var(--out) both;animation-delay:calc(var(--d,0)*45ms)}
+.panel,.primary{animation:in 300ms var(--out) both}
+.tog{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--line);padding:14px;border-radius:12px;cursor:pointer;transition:transform 150ms var(--out)}
+.tog:active{transform:scale(.98)}
+.tog input{width:24px;height:24px;margin:0;flex:none;accent-color:var(--accent);cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent);padding:0;border:0;background:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
 @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .lead{font-size:27px;font-weight:700;line-height:1.2}
 .big{font-size:42px;font-weight:800;color:var(--gold);line-height:1.1}
@@ -71,9 +83,23 @@ mild:["get lost in their own city","cry at a movie","be late to their own birthd
 spicy:["have the most embarrassing search history","text their ex at 2 a.m.","get kicked out of a restaurant","fall for someone in the friend group","ghost a first date","have a secret second phone","lie about their age online","drunk-order food for the whole house","cheat at a board game","get a parking ticket and ignore it for a year","sneak out as a teenager and not get caught","flirt their way out of trouble","have the most unhinged group chat","go to Vegas and not remember it","be a bad influence","hold a grudge for ten years","get caught talking about someone","pretend to know about something they don't","become a villain in a movie","date two people at once","have the wildest college story","lie on a resume","start drama in the group chat","steal a roommate's food","make out at a wedding","get banned from a bar","be the first to get married","be the first to get divorced","crash someone else's party uninvited","say something way too honest at a dinner","hook up with a coworker","break a law and call it a mistake","pick a fight over something dumb","fake an injury to get out of plans","be a spy","have a secret admirer","double text three times","lose a bet and welch on it","have an OnlyFans-level confidence","get way too competitive over a card game"],
 wild:["become a cult leader","get arrested for something ridiculous","fake their own death","start a business that's actually a scam","be on a reality dating show","marry for money","hide a body (and be good at it)","run away to join the circus","be abducted by aliens and enjoy it","accidentally start a viral conspiracy","become a supervillain","go to jail for a crime they didn't commit","survive on a deserted island the longest","get stuck in a witness-protection program","end up on the news","win the lottery and lose it all in a year","sell their soul for fame","time-travel and ruin history","be a secret billionaire","have an evil twin","start a riot at a concert","become president","be the last person on Earth","get possessed by a ghost","run for mayor as a joke and win","get chased by a goose","join a pyramid scheme","dress as a mascot and refuse to leave the costume","build a bunker in their backyard","become a conspiracy theorist"]};
 const THEMES=['default','ocean','forest','sunset','grape','mono','light'];
-const def={players:['','',''],cats:{mild:true,spicy:true,wild:true},theme:'default',self:false,rounds:15};
+const def={players:['','',''],cats:{mild:true,spicy:true,wild:true},theme:'default',self:false,rounds:15,sound:true,vibe:true,vol:.6};
 let S;try{S=Object.assign({},def,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){S=Object.assign({},def)}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let ac;
+function ensureAudio(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}}
+function tone(f,d,{type='sine',vol=1,slide=0,delay=0}={}){if(!S.sound||!ac)return;const t=ac.currentTime+delay,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol*S.vol*.35,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.02)}
+function noise(d,f0,f1,vol=1,delay=0){if(!S.sound||!ac)return;const t=ac.currentTime+delay,n=ac.sampleRate*d|0,buf=ac.createBuffer(1,n,ac.sampleRate),x=buf.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const src=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();src.buffer=buf;fl.type='bandpass';fl.Q.value=1.2;fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol*S.vol*.35,t+d*.6);g.gain.exponentialRampToValueAtTime(.0001,t+d);src.connect(fl);fl.connect(g);g.connect(ac.destination);src.start(t)}
+const bell=(f,delay=0,len=1)=>{tone(f,.9*len,{vol:.8,delay});tone(f*2.76,.5*len,{vol:.22,delay})};
+let tapT;const named=fn=>(...a)=>{clearTimeout(tapT);fn(...a)};
+const sfx={tap:()=>tone(1200,.04,{vol:.5}),tick:()=>tone(900,.03,{type:'square',vol:.3}),
+vote:named(()=>[523.25,659.25,783.99].forEach((f,i)=>tone(f,.25,{vol:.7,delay:i*.08}))),
+pass:named(()=>{noise(.25,400,2600,1.4);bell(659.25,.16)}),
+reveal:named(()=>{noise(.3,300,3000,2.2);bell(880,.22)}),
+win:named(()=>[523.25,659.25,783.99,1046.5].forEach((f,i)=>bell(f,i*.09,.8))),
+start:named(()=>{bell(784,0,.8);bell(988,.12,.8)})};
+function buzz(p){try{if(S.vibe&&navigator.vibrate)navigator.vibrate(p)}catch(e){}}
+document.addEventListener('click',e=>{if(e.target.closest('button,input[type=checkbox]')){ensureAudio();tapT=setTimeout(sfx.tap,0)}},true);
 const $=s=>document.querySelector(s);const app=$('#app');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -84,7 +110,7 @@ function wheel(el,vals,cur,fn){el.innerHTML='<ul tabindex=0 aria-label="Number o
 const ul=el.firstChild,H=44;let idx=Math.max(0,vals.indexOf(cur));
 const mark=()=>[...ul.children].forEach((li,i)=>li.classList.toggle('sel',i===idx));
 ul.scrollTop=idx*H;mark();
-ul.onscroll=()=>{const i=Math.max(0,Math.min(vals.length-1,Math.round(ul.scrollTop/H)));if(i!==idx){idx=i;mark();try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}fn(vals[i])}};
+ul.onscroll=()=>{const i=Math.max(0,Math.min(vals.length-1,Math.round(ul.scrollTop/H)));if(i!==idx){idx=i;mark();sfx.tick();buzz(8);fn(vals[i])}};
 ul.onclick=e=>{const li=e.target.closest('li');if(li)ul.scrollTo({top:[...ul.children].indexOf(li)*H,behavior:'smooth'})};
 ul.onkeydown=e=>{const d=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0;if(d){e.preventDefault();ul.scrollTo({top:Math.max(0,Math.min(vals.length-1,idx+d))*H,behavior:'smooth'})}}}
 let G=null;
@@ -110,10 +136,12 @@ function howto(){app.innerHTML=`<div class=top><button class=link id=bk>← Back
 $('#bk').onclick=home;$('#bk2').onclick=home}
 function settings(){app.innerHTML=`<div class=top><button class=link id=bk>← Back</button><span></span></div><h1>Settings</h1>
 <div class=panel><h2>Color theme</h2><div class=row>${THEMES.map(t=>`<button class=chip data-t=${t} aria-pressed=${S.theme===t}>${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
+<div class=panel><h2>Feedback</h2><label class=tog><span>Sound effects</span><input type=checkbox id=snd ${S.sound?'checked':''}></label><label class=tog><span>Vibration (Android only)</span><input type=checkbox id=vib ${S.vibe?'checked':''}></label><h2>Volume</h2><input type=range id=vol min=.1 max=1 step=.05 value=${S.vol} aria-label=Volume></div>
 <div class=panel><h2>Voting</h2><button class=chip id=sf aria-pressed=${S.self}>Allow voting for yourself: ${S.self?'on':'off'}</button></div>`;
 $('#bk').onclick=home;document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.theme=b.dataset.t;save();applyTheme();settings()});
-$('#sf').onclick=()=>{S.self=!S.self;save();settings()}}
-function start(){const players=S.players.map((s,i)=>s.trim()||"Player "+(i+1));
+$('#sf').onclick=()=>{S.self=!S.self;save();settings()};
+$('#snd').onchange=e=>{S.sound=e.target.checked;save();ensureAudio();sfx.tick()};$('#vib').onchange=e=>{S.vibe=e.target.checked;save();buzz(20)};$('#vol').oninput=e=>{S.vol=+e.target.value};$('#vol').onchange=()=>{save();ensureAudio();sfx.tick()}}
+function start(){ensureAudio();sfx.start();buzz(15);const players=S.players.map((s,i)=>s.trim()||"Player "+(i+1));
 let pool=[];for(const c of Object.keys(S.cats))if(S.cats[c])pool=pool.concat(PROMPTS[c]);
 pool=shuffle(pool).slice(0,Math.min(S.rounds,pool.length));
 G={players,pool,i:0,voter:0,votes:[],score:players.map(()=>0)};prompt_()}
@@ -121,25 +149,25 @@ function scoreBar(){return `<div class=score>${G.players.map((p,i)=>`<span>${esc
 function topBar(){return `<div class=top><span class=dim>Round ${G.i+1} / ${G.pool.length}</span><button class=link id=quit>End game</button></div>`}
 function hookQuit(){const q=$('#quit');if(q)q.onclick=()=>{if(confirm('End the game?'))final()}}
 function prompt_(){G.voter=0;G.votes=[];
-app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Who's most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><p class=dim>Pass the phone. Vote in secret.</p></div><button class=primary id=nx>Start voting</button>${scoreBar()}`;hookQuit();$('#nx').onclick=ballot}
+app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Who's most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><p class=dim>Pass the phone. Vote in secret.</p></div><button class=primary id=nx>Start voting</button>${scoreBar()}`;hookQuit();$('#nx').onclick=()=>{sfx.pass();buzz(12);ballot()}}
 function ballot(){const p=G.players[G.voter];
 app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><div class=dim>${esc(p)}, tap your pick</div></div>
-<div class=names>${G.players.map((n,i)=>`<button data-v=${i} ${!S.self&&i===G.voter?'disabled':''}>${esc(n)}</button>`).join('')}</div><p class=dim style="text-align:center">Voter ${G.voter+1} of ${G.players.length}</p>`;hookQuit();
-document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{G.votes.push(+b.dataset.v);G.voter++;G.voter<G.players.length?handoff():reveal()})}
+<div class=names>${G.players.map((n,i)=>`<button style=--d:${i} data-v=${i} ${!S.self&&i===G.voter?'disabled':''}>${esc(n)}</button>`).join('')}</div><p class=dim style="text-align:center">Voter ${G.voter+1} of ${G.players.length}</p>`;hookQuit();
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{sfx.vote();buzz([10,30,10]);G.votes.push(+b.dataset.v);G.voter++;G.voter<G.players.length?handoff():reveal()})}
 function handoff(){app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Vote locked in. Pass the phone to</div><div class=big>${esc(G.players[G.voter])}</div></div><button class=primary id=nx>I'm ${esc(G.players[G.voter])}, show me</button>`;hookQuit();$('#nx').onclick=ballot}
 function reveal(){const t=tally(G.votes,G.players),w=winners(t);w.forEach(i=>G.score[i]++);
 const order=t.map((n,i)=>i).sort((a,b)=>t[b]-t[a]);const mx=Math.max(1,...t);
 const who=w.length===1?`${esc(G.players[w[0]])} it is!`:`${w.map(i=>esc(G.players[i])).join(' & ')} tied!`;
 app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Most likely to ${esc(G.pool[G.i])}</div><div class=big>${who}</div>
-<div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${t[i]/mx*100}%"></i><b>${t[i]}</b></div>`).join('')}</div></div>
-<button class=primary id=nx>${G.i+1<G.pool.length?'Next prompt':'Final results'}</button>${scoreBar()}`;hookQuit();
+<div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${t[i]/mx*100}%;--d:${order.indexOf(i)}"></i><b>${t[i]}</b></div>`).join('')}</div></div>
+<button class=primary id=nx>${G.i+1<G.pool.length?'Next prompt':'Final results'}</button>${scoreBar()}`;hookQuit();sfx.reveal();buzz([20,40,40]);
 $('#nx').onclick=()=>{if(G.i+1<G.pool.length){G.i++;prompt_()}else final()}}
 function final(){const m=Math.max(...G.score);const order=G.score.map((n,i)=>i).sort((a,b)=>G.score[b]-G.score[a]);
 const w=G.score.map((n,i)=>n===m&&m>0?i:-1).filter(i=>i>=0);
 app.innerHTML=`<h1>Game over</h1><div class="stage enter"><div class=dim>Most "likely to" overall</div><div class=big>${w.length?w.map(i=>esc(G.players[i])).join(' & '):'Nobody!'}</div>
-<div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${m?G.score[i]/m*100:0}%"></i><b>${G.score[i]}</b></div>`).join('')}</div></div>
+<div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${m?G.score[i]/m*100:0}%;--d:${order.indexOf(i)}"></i><b>${G.score[i]}</b></div>`).join('')}</div></div>
 <button class=primary id=ag>Play again</button><button id=hm>Home</button>`;
-$('#ag').onclick=start;$('#hm').onclick=home}
+sfx.win();buzz([30,50,30,50,80]);$('#ag').onclick=start;$('#hm').onclick=home}
 home();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
