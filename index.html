@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1220">
+<meta name="description" content="Most Likely To... A party game for one shared phone. Works offline.">
+<title>Most Likely To...</title>
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{color-scheme:dark;--bg:#0f1220;--panel:#1b2036;--text:#f2f4ff;--dim:#9aa3c7;--accent:#ff4d6d;--gold:#ffd166;--ok:#4dd6a4;--line:#2c3354;--on:#fff;--out:cubic-bezier(.2,.8,.2,1)}
+[data-theme=ocean]{--bg:#06202e;--panel:#0d3347;--text:#eaf8ff;--dim:#8fb8cc;--accent:#14b8e6;--ok:#5eead4;--line:#17506b}
+[data-theme=forest]{--bg:#0e1a12;--panel:#17291d;--text:#eefaf0;--dim:#9bbfa4;--accent:#3fb950;--ok:#a3e635;--line:#25402d}
+[data-theme=sunset]{--bg:#1f1020;--panel:#33182f;--text:#fff1ea;--dim:#d1a3b0;--accent:#ff7a3d;--ok:#ffd166;--line:#52284a}
+[data-theme=grape]{--bg:#150f26;--panel:#241a40;--text:#f5f0ff;--dim:#b3a5d9;--accent:#a855f7;--ok:#f0abfc;--line:#3b2d66}
+[data-theme=mono]{--bg:#000;--panel:#161616;--text:#fff;--dim:#9a9a9a;--accent:#fff;--ok:#fff;--line:#2b2b2b;--on:#000}
+[data-theme=light]{color-scheme:light;--bg:#f4f5fb;--panel:#fff;--text:#1a1d2e;--dim:#6b7194;--accent:#e63e5c;--ok:#12a77a;--line:#d9dcee}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:17px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:inherit;color:var(--text);border:0;border-radius:14px;padding:14px;cursor:pointer;touch-action:manipulation;transition:transform 150ms var(--out),opacity .2s;background:var(--panel)}
+button:active:not(:disabled){transform:scale(.97)}
+button:disabled{opacity:.35;cursor:default}
+input[type=text]{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%;min-width:0;-webkit-user-select:text;user-select:text}
+select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%}
+main{max-width:520px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;min-height:100vh;min-height:100dvh}
+h1{margin:6px 0 0;font-size:30px;line-height:1.1;text-align:center}
+h1 b{color:var(--accent)}
+h2{margin:0;font-size:15px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.sub{text-align:center;color:var(--dim);margin:0}
+.panel{background:var(--panel);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.primary{background:var(--accent);color:var(--on);font-weight:700;padding:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:9px 13px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:15px}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on);font-weight:600}
+.stage{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;text-align:center}
+.stage.enter>*{animation:in 250ms var(--out)}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.lead{font-size:27px;font-weight:700;line-height:1.2}
+.big{font-size:42px;font-weight:800;color:var(--gold);line-height:1.1}
+.dim{color:var(--dim);font-size:15px}
+.top{display:flex;justify-content:space-between;align-items:center}
+.link{background:none;color:var(--dim);padding:8px 4px}
+.score{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.score span{background:var(--panel);border-radius:999px;padding:5px 12px;font-size:14px}
+.x{background:none;padding:0 2px;color:var(--dim)}
+.prow{display:flex;gap:8px;align-items:center}
+.names{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.names button{padding:18px 8px;font-size:19px;font-weight:600;border:1px solid var(--line)}
+.names button:disabled{opacity:.25}
+.bar{display:grid;grid-template-columns:90px 1fr 28px;gap:8px;align-items:center;text-align:left;font-size:16px}
+.bar i{display:block;height:20px;border-radius:10px;background:var(--accent);min-width:4px;transition:width .6s var(--out)}
+.bar.win i{background:var(--gold)}
+.bar.win b{color:var(--gold)}
+.bar b{text-align:right}
+.bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style></head>
+<body><main id="app"></main>
+<script>
+const KEY='mostlikelyto-v1';
+const PROMPTS={
+mild:["get lost in their own city","cry at a movie","be late to their own birthday","adopt ten cats","become famous","forget someone's name right after hearing it","talk to a stranger on a plane for the whole flight","win a hot-dog eating contest","sleep through an alarm on an important day","text the wrong person","spend a whole paycheck on snacks","start a podcast nobody asked for","laugh at a funeral","be the first to leave a party","burn water","get a tattoo on a dare","stay up all night playing video games","eat the last slice without asking","have a secret talent","survive a zombie apocalypse","become a millionaire","trip in front of a crowd","talk their way out of a speeding ticket","still have the same phone in ten years","binge a whole series in one day","quit their job to travel","adopt a stray animal","show up at the wrong wedding","run a marathon without training","accidentally like an old photo while stalking","never finish a book they start","get hangry","start a fire while cooking","give the best advice","be a good politician","write a bestselling novel","get stuck in an elevator","have a pet snake","cry during a commercial","forget their own phone number","become a stand-up comedian","arrive an hour early to everything","lose their keys daily","sing in the shower with the window open","name their kid something weird","talk to their plants","go viral for something embarrassing","become a monk","own too many hoodies","get a speeding ticket"],
+spicy:["have the most embarrassing search history","text their ex at 2 a.m.","get kicked out of a restaurant","fall for someone in the friend group","ghost a first date","have a secret second phone","lie about their age online","drunk-order food for the whole house","cheat at a board game","get a parking ticket and ignore it for a year","sneak out as a teenager and not get caught","flirt their way out of trouble","have the most unhinged group chat","go to Vegas and not remember it","be a bad influence","hold a grudge for ten years","get caught talking about someone","pretend to know about something they don't","become a villain in a movie","date two people at once","have the wildest college story","lie on a resume","start drama in the group chat","steal a roommate's food","make out at a wedding","get banned from a bar","be the first to get married","be the first to get divorced","crash someone else's party uninvited","say something way too honest at a dinner","hook up with a coworker","break a law and call it a mistake","pick a fight over something dumb","fake an injury to get out of plans","be a spy","have a secret admirer","double text three times","lose a bet and welch on it","have an OnlyFans-level confidence","get way too competitive over a card game"],
+wild:["become a cult leader","get arrested for something ridiculous","fake their own death","start a business that's actually a scam","be on a reality dating show","marry for money","hide a body (and be good at it)","run away to join the circus","be abducted by aliens and enjoy it","accidentally start a viral conspiracy","become a supervillain","go to jail for a crime they didn't commit","survive on a deserted island the longest","get stuck in a witness-protection program","end up on the news","win the lottery and lose it all in a year","sell their soul for fame","time-travel and ruin history","be a secret billionaire","have an evil twin","start a riot at a concert","become president","be the last person on Earth","get possessed by a ghost","run for mayor as a joke and win","get chased by a goose","join a pyramid scheme","dress as a mascot and refuse to leave the costume","build a bunker in their backyard","become a conspiracy theorist"]};
+const THEMES=['default','ocean','forest','sunset','grape','mono','light'];
+const def={players:['','',''],cats:{mild:true,spicy:true,wild:true},theme:'default',self:false,rounds:15};
+let S;try{S=Object.assign({},def,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){S=Object.assign({},def)}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s);const app=$('#app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const applyTheme=()=>document.documentElement.dataset.theme=S.theme==='default'?'':S.theme;
+function tally(votes,players){const t=players.map(()=>0);votes.forEach(v=>{if(v>=0)t[v]++});return t}
+function winners(t){const m=Math.max(...t);return m>0?t.map((n,i)=>n===m?i:-1).filter(i=>i>=0):[]}
+let G=null;
+function home(){applyTheme();G=null;
+app.innerHTML=`<div class=top><span></span><button class=link id=set>⚙ Settings</button></div>
+<h1>Most Likely <b>To...</b></h1><p class=sub>One shared phone. Everyone votes in secret, then the group is exposed.</p>
+<div class=panel><h2>Players (3–12)</h2><div id=pl></div><button id=add>+ Add player</button></div>
+<div class=panel><h2>Prompts</h2><div class=row id=cats></div></div>
+<div class=panel><h2>Rounds</h2><div class=row id=rd></div></div>
+<button class=primary id=go>Start game</button>`;
+const pl=$('#pl');const draw=()=>{pl.innerHTML=S.players.map((p,i)=>`<div class=prow style="margin-bottom:8px"><input type=text maxlength=14 placeholder="Player ${i+1}" value="${esc(p)}" data-i=${i}><button class=x data-r=${i} aria-label="Remove">✕</button></div>`).join('');
+pl.querySelectorAll('input').forEach(e=>e.oninput=()=>{S.players[e.dataset.i]=e.value;save();chk()});
+pl.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.players.splice(b.dataset.r,1);while(S.players.length<3)S.players.push('');save();draw();chk()});$('#add').disabled=S.players.length>=12};
+const chk=()=>$('#go').disabled=names().length<3||!Object.values(S.cats).some(Boolean);
+const names=()=>S.players.map(s=>s.trim()).filter(Boolean);
+draw();$('#add').onclick=()=>{S.players.push('');save();draw();pl.querySelectorAll('input')[S.players.length-1].focus()};
+$('#cats').innerHTML=['mild','spicy','wild'].map(c=>`<button class=chip data-c=${c} aria-pressed=${S.cats[c]}>${c[0].toUpperCase()+c.slice(1)}</button>`).join('');
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.cats[b.dataset.c]=!S.cats[b.dataset.c];b.setAttribute('aria-pressed',S.cats[b.dataset.c]);save();chk()});
+$('#rd').innerHTML=[10,15,25,40].map(n=>`<button class=chip data-n=${n} aria-pressed=${S.rounds===n}>${n}</button>`).join('');
+document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{S.rounds=+b.dataset.n;save();document.querySelectorAll('[data-n]').forEach(x=>x.setAttribute('aria-pressed',+x.dataset.n===S.rounds))});
+$('#set').onclick=settings;$('#go').onclick=start;chk()}
+function settings(){app.innerHTML=`<div class=top><button class=link id=bk>← Back</button><span></span></div><h1>Settings</h1>
+<div class=panel><h2>Color theme</h2><div class=row>${THEMES.map(t=>`<button class=chip data-t=${t} aria-pressed=${S.theme===t}>${t}</button>`).join('')}</div></div>
+<div class=panel><h2>Voting</h2><button class=chip id=sf aria-pressed=${S.self}>Allow voting for yourself: ${S.self?'on':'off'}</button></div>`;
+$('#bk').onclick=home;document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.theme=b.dataset.t;save();applyTheme();settings()});
+$('#sf').onclick=()=>{S.self=!S.self;save();settings()}}
+function start(){const players=S.players.map(s=>s.trim()).filter(Boolean);
+let pool=[];for(const c of Object.keys(S.cats))if(S.cats[c])pool=pool.concat(PROMPTS[c]);
+pool=shuffle(pool).slice(0,Math.min(S.rounds,pool.length));
+G={players,pool,i:0,voter:0,votes:[],score:players.map(()=>0)};prompt_()}
+function scoreBar(){return `<div class=score>${G.players.map((p,i)=>`<span>${esc(p)} ${G.score[i]}</span>`).join('')}</div>`}
+function topBar(){return `<div class=top><span class=dim>Round ${G.i+1} / ${G.pool.length}</span><button class=link id=quit>End game</button></div>`}
+function hookQuit(){const q=$('#quit');if(q)q.onclick=()=>{if(confirm('End the game?'))final()}}
+function prompt_(){G.voter=0;G.votes=[];
+app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Who's most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><p class=dim>Pass the phone. Vote in secret.</p></div><button class=primary id=nx>Start voting</button>${scoreBar()}`;hookQuit();$('#nx').onclick=ballot}
+function ballot(){const p=G.players[G.voter];
+app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><div class=dim>${esc(p)}, tap your pick</div></div>
+<div class=names>${G.players.map((n,i)=>`<button data-v=${i} ${!S.self&&i===G.voter?'disabled':''}>${esc(n)}</button>`).join('')}</div><p class=dim style="text-align:center">Voter ${G.voter+1} of ${G.players.length}</p>`;hookQuit();
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{G.votes.push(+b.dataset.v);G.voter++;G.voter<G.players.length?handoff():reveal()})}
+function handoff(){app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Vote locked in. Pass the phone to</div><div class=big>${esc(G.players[G.voter])}</div></div><button class=primary id=nx>I'm ${esc(G.players[G.voter])}, show me</button>`;hookQuit();$('#nx').onclick=ballot}
+function reveal(){const t=tally(G.votes,G.players),w=winners(t);w.forEach(i=>G.score[i]++);
+const order=t.map((n,i)=>i).sort((a,b)=>t[b]-t[a]);const mx=Math.max(1,...t);
+const who=w.length===1?`${esc(G.players[w[0]])} it is!`:`${w.map(i=>esc(G.players[i])).join(' & ')} tied!`;
+app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Most likely to ${esc(G.pool[G.i])}</div><div class=big>${who}</div>
+<div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${t[i]/mx*100}%"></i><b>${t[i]}</b></div>`).join('')}</div></div>
+<button class=primary id=nx>${G.i+1<G.pool.length?'Next prompt':'Final results'}</button>${scoreBar()}`;hookQuit();
+$('#nx').onclick=()=>{if(G.i+1<G.pool.length){G.i++;prompt_()}else final()}}
+function final(){const m=Math.max(...G.score);const order=G.score.map((n,i)=>i).sort((a,b)=>G.score[b]-G.score[a]);
+const w=G.score.map((n,i)=>n===m&&m>0?i:-1).filter(i=>i>=0);
+app.innerHTML=`<h1>Game over</h1><div class="stage enter"><div class=dim>Most "likely to" overall</div><div class=big>${w.length?w.map(i=>esc(G.players[i])).join(' & '):'Nobody!'}</div>
+<div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${m?G.score[i]/m*100:0}%"></i><b>${G.score[i]}</b></div>`).join('')}</div></div>
+<button class=primary id=ag>Play again</button><button id=hm>Home</button>`;
+$('#ag').onclick=start;$('#hm').onclick=home}
+home();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+</script></body></html>
