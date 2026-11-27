@@ -102,7 +102,7 @@ mild:["get lost in their own city","cry at a movie","be late to their own birthd
 spicy:["have the most embarrassing search history","text their ex at 2 a.m.","get kicked out of a restaurant","fall for someone in the friend group","ghost a first date","have a secret second phone","lie about their age online","drunk-order food for the whole house","cheat at a board game","get a parking ticket and ignore it for a year","sneak out as a teenager and not get caught","flirt their way out of trouble","have the most unhinged group chat","go to Vegas and not remember it","be a bad influence","hold a grudge for ten years","get caught talking about someone","pretend to know about something they don't","become a villain in a movie","date two people at once","have the wildest college story","lie on a resume","start drama in the group chat","steal a roommate's food","make out at a wedding","get banned from a bar","be the first to get married","be the first to get divorced","crash someone else's party uninvited","say something way too honest at a dinner","hook up with a coworker","break a law and call it a mistake","pick a fight over something dumb","fake an injury to get out of plans","be a spy","have a secret admirer","double text three times","lose a bet and welch on it","have an OnlyFans-level confidence","get way too competitive over a card game"],
 wild:["become a cult leader","get arrested for something ridiculous","fake their own death","start a business that's actually a scam","be on a reality dating show","marry for money","hide a body (and be good at it)","run away to join the circus","be abducted by aliens and enjoy it","accidentally start a viral conspiracy","become a supervillain","go to jail for a crime they didn't commit","survive on a deserted island the longest","get stuck in a witness-protection program","end up on the news","win the lottery and lose it all in a year","sell their soul for fame","time-travel and ruin history","be a secret billionaire","have an evil twin","start a riot at a concert","become president","be the last person on Earth","get possessed by a ghost","run for mayor as a joke and win","get chased by a goose","join a pyramid scheme","dress as a mascot and refuse to leave the costume","build a bunker in their backyard","become a conspiracy theorist"]};
 const THEMES=['default','ocean','forest','sunset','grape','mono','light'];
-const def={players:['','',''],cats:{mild:true,spicy:true,wild:true},theme:'default',self:false,rounds:15,sound:true,vibe:true,vol:.6};
+const def={players:['','',''],cats:{mild:true,spicy:true,wild:true},theme:'default',self:false,rounds:15,sound:true,vibe:true,vol:.6,play:'pass'};
 let S;try{S=Object.assign({},def,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){S=Object.assign({},def)}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 // ---- party sound kit: the SAME block in all five games (Imposter, Would You Rather, She's a 10, Most Likely To, Hot Take). Change one, change all.
@@ -148,8 +148,9 @@ ul.onkeydown=e=>{const d=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0;if(d){e.pr
 let G=null;
 function home(){applyTheme();G=null;
 app.innerHTML=`<div class=top><button class=link id=how><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg> How to Play</button><button class=link id=set><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Settings</button></div>
-<h1>Most Likely <b>To...</b></h1><p class=sub>One shared phone. Everyone votes in secret, then the group is exposed.</p>
-<div class=panel><h2>Players</h2><div id=pl></div><button id=add><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Add player</button></div>
+<h1>Most Likely <b>To...</b></h1><p class=sub id=sb></p>
+<div class=panel><h2>Game mode</h2><div class=row><button class=chip data-g=pass>Pass &amp; vote</button><button class=chip data-g=talk>Discuss</button></div><div class=dim id=gd></div></div>
+<div class=panel id=pp><h2>Players</h2><div id=pl></div><button id=add><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Add player</button></div>
 <div class=panel><h2>Prompts</h2><div class=row id=cats></div></div>
 <div class=panel><h2>Rounds</h2><div id=rd class=wheel></div></div>
 <button class=primary id=go>Start game</button>
@@ -157,15 +158,17 @@ app.innerHTML=`<div class=top><button class=link id=how><svg class="svgi" viewBo
 const pl=$('#pl');const draw=()=>{pl.innerHTML=S.players.map((p,i)=>`<div class=prow style="margin-bottom:8px"><input type=text maxlength=14 placeholder="Player ${i+1}" value="${esc(p)}" data-i=${i}><button class=x data-r=${i} aria-label="Remove"><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>`).join('');
 pl.querySelectorAll('input').forEach(e=>e.oninput=()=>{S.players[e.dataset.i]=e.value;save();chk()});
 pl.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.players.splice(b.dataset.r,1);while(S.players.length<3)S.players.push('');save();draw();chk()});$('#add').disabled=S.players.length>=12};
-const chk=()=>$('#go').disabled=names().length<3||!Object.values(S.cats).some(Boolean);
+const chk=()=>$('#go').disabled=(S.play!=='talk'&&names().length<3)||!Object.values(S.cats).some(Boolean);
 const names=()=>S.players.map((s,i)=>s.trim()||"Player "+(i+1));
 draw();$('#add').onclick=()=>{S.players.push('');save();draw();pl.querySelectorAll('input')[S.players.length-1].focus()};
 $('#cats').innerHTML=['mild','spicy','wild'].map(c=>`<button class=chip data-c=${c} aria-pressed=${S.cats[c]}>${c[0].toUpperCase()+c.slice(1)}</button>`).join('');
 document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.cats[b.dataset.c]=!S.cats[b.dataset.c];b.setAttribute('aria-pressed',S.cats[b.dataset.c]);save();chk()});
 wheel($('#rd'),Array.from({length:48},(_,i)=>i+3),S.rounds,n=>{S.rounds=n;save()});
-$('#how').onclick=howto;$('#set').onclick=settings;$('#go').onclick=start;chk()}
+const gdraw=()=>{const t=S.play==='talk';document.querySelectorAll('[data-g]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.g===S.play));$('#pp').hidden=t;$('#gd').textContent=t?"Just questions on screen for the whole group.":"Everyone votes in secret on one phone.";$('#sb').textContent=t?"Big group? Read it out and talk it over. No names, no passing.":"One shared phone. Everyone votes in secret, then the group is exposed.";chk()};
+document.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{S.play=b.dataset.g;save();gdraw()});
+$('#how').onclick=howto;$('#set').onclick=settings;$('#go').onclick=start;gdraw()}
 function howto(){app.innerHTML=`<div class=top><button class=link id=bk>← Back</button><span></span></div><h1>How to Play</h1>
-<div class=panel><ol class=how>${["Add 3 to 12 players and pick your prompt types and number of rounds.","Each round, a prompt like \"Who's most likely to...\" appears. Read it out loud.","Pass the phone around. Each player taps the name they think fits best, in secret.","After the last vote, the results show who got the most votes. That player scores a point.","Ties give a point to everyone tied.","Play all the rounds. The player with the most points at the end is the most \"likely to\" overall.","Tip: turn on voting for yourself in Settings if you want it."].map((x,i)=>`<li style="--i:${i}">${x}</li>`).join('')}</ol></div><button class=primary id=bk2>Got it</button>`;
+<div class=panel><ol class=how>${["Add 3 to 12 players and pick your prompt types and number of rounds.","Each round, a prompt like \"Who's most likely to...\" appears. Read it out loud.","Pass the phone around. Each player taps the name they think fits best, in secret.","After the last vote, the results show who got the most votes. That player scores a point.","Ties give a point to everyone tied.","Play all the rounds. The player with the most points at the end is the most \"likely to\" overall.","Tip: turn on voting for yourself in Settings if you want it.","Big group? Pick Discuss mode: no names or passing the phone. Read each question out, talk it over, then tap Next."].map((x,i)=>`<li style="--i:${i}">${x}</li>`).join('')}</ol></div><button class=primary id=bk2>Got it</button>`;
 $('#bk').onclick=home;$('#bk2').onclick=home}
 function settings(){app.innerHTML=`<div class=top><button class=link id=bk>← Back</button><span></span></div><h1>Settings</h1>
 <div class=panel><h2>Color theme</h2><div class=row>${THEMES.map(t=>`<button class=chip data-t=${t} aria-pressed=${S.theme===t}>${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
@@ -177,7 +180,7 @@ $('#snd').onchange=e=>{S.sound=e.target.checked;save();ensureAudio();sfx.tick()}
 function start(){ensureAudio();sfx.start();buzz(BUZZ.lock);const players=S.players.map((s,i)=>s.trim()||"Player "+(i+1));
 let pool=[];for(const c of Object.keys(S.cats))if(S.cats[c])pool=pool.concat(PROMPTS[c]);
 pool=shuffle(pool).slice(0,Math.min(S.rounds,pool.length));
-G={players,pool,i:0,voter:0,votes:[],score:players.map(()=>0)};prompt_()}
+G={players,pool,i:0,voter:0,votes:[],score:players.map(()=>0)};G.talk=S.play==='talk';G.talk?talk():prompt_()}
 function scoreBar(){return `<div class=score>${G.players.map((p,i)=>`<span>${esc(p)} ${G.score[i]}</span>`).join('')}</div>`}
 function topBar(){return `<div class=top><span class=dim>Round ${G.i+1} / ${G.pool.length}</span><button class=link id=quit>End game</button></div>`}
 function hookQuit(){const q=$('#quit');if(q)q.onclick=()=>{if(confirm('End the game?'))final()}}
@@ -195,7 +198,15 @@ app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Most likely to
 <div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${t[i]/mx*100}%;--d:${order.indexOf(i)}"></i><b>${t[i]}</b></div>`).join('')}</div></div>
 <button class=primary id=nx>${G.i+1<G.pool.length?'Next prompt':'Final results'}</button>${scoreBar()}`;hookQuit();sfx.reveal();buzz(BUZZ.reveal);
 $('#nx').onclick=()=>{if(G.i+1<G.pool.length){G.i++;prompt_()}else final()}}
-function final(){const m=Math.max(...G.score);const order=G.score.map((n,i)=>i).sort((a,b)=>G.score[b]-G.score[a]);
+// discuss mode: prompts only, no players, votes or scores
+function talk(){const more=G.i+1<G.pool.length;
+app.innerHTML=`<div class=top><span class=dim>Question ${G.i+1} / ${G.pool.length}</span><button class=link id=quit>End game</button></div><div class="stage enter"><div class=dim>Who's most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><p class=dim>Talk it out. Who is it, and why?</p></div><button class=primary id=nx>${more?'Next question':'Finish'}</button>`;
+hookQuit();$('#nx').onclick=()=>{if(more){G.i++;sfx.card();buzz(BUZZ.card);talk()}else final()}}
+function talkEnd(){const n=G.i+1;
+app.innerHTML=`<h1>Game over</h1><div class="stage enter"><div class=dim>That's a wrap</div><div class=big>Good talk!</div><p class=dim>${n} question${n===1?'':'s'} discussed</p></div><button class=primary id=ag>Play again</button><button id=hm>Home</button><details class="more-games"><summary>More games</summary><a href="https://infinityxxxxx.github.io/imposter/">Imposter</a><a href="https://infinityxxxxx.github.io/would-you-rather/">Would You Rather</a><a href="https://infinityxxxxx.github.io/shes-a-10-but/">She's a 10, but...</a><a href="https://infinityxxxxx.github.io/hot-take-spectrum/">Hot Take Spectrum</a></details>`;
+sfx.win();buzz(BUZZ.win);$('#ag').onclick=start;$('#hm').onclick=home}
+function final(){if(G.talk)return talkEnd();
+const m=Math.max(...G.score);const order=G.score.map((n,i)=>i).sort((a,b)=>G.score[b]-G.score[a]);
 const w=G.score.map((n,i)=>n===m&&m>0?i:-1).filter(i=>i>=0);
 app.innerHTML=`<h1>Game over</h1><div class="stage enter"><div class=dim>Most "likely to" overall</div><div class=big>${w.length?w.map(i=>esc(G.players[i])).join(' & '):'Nobody!'}</div>
 <div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${m?G.score[i]/m*100:0}%;--d:${order.indexOf(i)}"></i><b>${G.score[i]}</b></div>`).join('')}</div></div>
