@@ -86,6 +86,13 @@ input,textarea{caret-color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 html{scrollbar-color:var(--line) transparent}
 .svgi{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
+/* more games drop-down (same in all five games) */
+.more-games{width:min(100%,420px);margin:16px auto;text-align:center;flex:none}
+.more-games summary{list-style:none;cursor:pointer;padding:14px;border-radius:14px;border:1px solid color-mix(in srgb,currentColor 25%,transparent);font-weight:700}
+.more-games summary::-webkit-details-marker{display:none}
+.more-games summary::after{content:" \25BE"}
+.more-games[open] summary::after{content:" \25B4"}
+.more-games a{display:block;margin-top:8px;padding:14px;border-radius:14px;background:color-mix(in srgb,currentColor 10%,transparent);color:inherit;text-decoration:none}
 </style></head>
 <body><main id="app"></main>
 <script>
@@ -98,20 +105,33 @@ const THEMES=['default','ocean','forest','sunset','grape','mono','light'];
 const def={players:['','',''],cats:{mild:true,spicy:true,wild:true},theme:'default',self:false,rounds:15,sound:true,vibe:true,vol:.6};
 let S;try{S=Object.assign({},def,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){S=Object.assign({},def)}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+// ---- party sound kit: the SAME block in all five games (Imposter, Would You Rather, She's a 10, Most Likely To, Hot Take). Change one, change all.
 let ac;
 function ensureAudio(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}}
 function tone(f,d,{type='sine',vol=1,slide=0,delay=0}={}){if(!S.sound||!ac)return;const t=ac.currentTime+delay,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol*S.vol*.35,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.02)}
 function noise(d,f0,f1,vol=1,delay=0){if(!S.sound||!ac)return;const t=ac.currentTime+delay,n=ac.sampleRate*d|0,buf=ac.createBuffer(1,n,ac.sampleRate),x=buf.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const src=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();src.buffer=buf;fl.type='bandpass';fl.Q.value=1.2;fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol*S.vol*.35,t+d*.6);g.gain.exponentialRampToValueAtTime(.0001,t+d);src.connect(fl);fl.connect(g);g.connect(ac.destination);src.start(t)}
 const bell=(f,delay=0,len=1)=>{tone(f,.9*len,{vol:.8,delay});tone(f*2.76,.5*len,{vol:.22,delay})};
-let tapT;const named=fn=>(...a)=>{clearTimeout(tapT);fn(...a)};
-const sfx={tap:()=>tone(1200,.04,{vol:.5}),tick:()=>tone(900,.03,{type:'square',vol:.3}),
-vote:named(()=>[523.25,659.25,783.99].forEach((f,i)=>tone(f,.25,{vol:.7,delay:i*.08}))),
-pass:named(()=>{noise(.25,400,2600,1.4);bell(659.25,.16)}),
-reveal:named(()=>{noise(.3,300,3000,2.2);bell(880,.22)}),
-win:named(()=>[523.25,659.25,783.99,1046.5].forEach((f,i)=>bell(f,i*.09,.8))),
-start:named(()=>{bell(784,0,.8);bell(988,.12,.8)})};
-function buzz(p){try{if(S.vibe&&navigator.vibrate)navigator.vibrate(p)}catch(e){}}
-document.addEventListener('click',e=>{if(e.target.closest('button,input[type=checkbox]')){ensureAudio();tapT=setTimeout(sfx.tap,0)}},true);
+let tapT;const named=fn=>(...a)=>{clearTimeout(tapT);fn(...a)}; // a named sound cancels the pending generic tap blip
+const sfx={
+ tap:()=>tone(1200,.04,{vol:.5}), // any button
+ tick:()=>tone(900,.03,{type:'square',vol:.3}), // scroll wheel, slider, countdown
+ start:named(()=>{bell(784,0,.8);bell(988,.12,.8)}), // game begins
+ card:named(()=>{noise(.25,400,2600,1.4);bell(659.25,.16)}), // new card / pass the phone
+ hide:named(()=>{tone(660,.12,{vol:.6});tone(494,.18,{vol:.6,delay:.1})}),
+ lock:named(()=>[523.25,659.25,783.99].forEach((f,i)=>tone(f,.25,{vol:.7,delay:i*.08}))), // vote or answer locked in
+ reveal:named(()=>{noise(.3,300,3000,2.2);bell(880,.22)}),
+ win:named(()=>[523.25,659.25,783.99,1046.5].forEach((f,i)=>bell(f,i*.09,.8))),
+ close:named(()=>{bell(784,0,.8);bell(988,.12,.8)}),
+ miss:named(()=>tone(220,.45,{type:'triangle',vol:1.2,slide:110})),
+ ding:named(()=>bell(1320,0,1.4)), // timer up
+ final:named(()=>{noise(.9,200,2500,2.4);tone(110,.5,{type:'triangle',vol:1.4,slide:55,delay:.9})}), // big drum-roll reveal
+ dot:i=>tone(600+i*90,.12,{vol:.5,delay:.25+i*.11})
+};
+// vibration strengths (ms), used by name everywhere
+const BUZZ={tap:12,tick:8,select:15,card:15,lock:30,reveal:40,close:[50,40,50],win:[60,40,60,40,120],miss:200,alarm:[300,100,300,100,300]};
+function buzz(p){try{if(S.vibe&&navigator.vibrate)navigator.vibrate(p)}catch(e){}} // Android only, iOS ignores it
+document.addEventListener('click',e=>{if(!e.target.closest('button,input[type=checkbox],select,summary,.more-games a'))return;ensureAudio();buzz(BUZZ.tap);tapT=setTimeout(sfx.tap,0)},true); // every tap: blip + light buzz
+// ---- end sound kit
 const $=s=>document.querySelector(s);const app=$('#app');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -122,7 +142,7 @@ function wheel(el,vals,cur,fn){el.innerHTML='<ul tabindex=0 aria-label="Number o
 const ul=el.firstChild,H=44;let idx=Math.max(0,vals.indexOf(cur));
 const mark=()=>[...ul.children].forEach((li,i)=>li.classList.toggle('sel',i===idx));
 ul.scrollTop=idx*H;mark();
-ul.onscroll=()=>{const i=Math.max(0,Math.min(vals.length-1,Math.round(ul.scrollTop/H)));if(i!==idx){idx=i;mark();sfx.tick();buzz(8);fn(vals[i])}};
+ul.onscroll=()=>{const i=Math.max(0,Math.min(vals.length-1,Math.round(ul.scrollTop/H)));if(i!==idx){idx=i;mark();sfx.tick();buzz(BUZZ.tick);fn(vals[i])}};
 ul.onclick=e=>{const li=e.target.closest('li');if(li)ul.scrollTo({top:[...ul.children].indexOf(li)*H,behavior:'smooth'})};
 ul.onkeydown=e=>{const d=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0;if(d){e.preventDefault();ul.scrollTo({top:Math.max(0,Math.min(vals.length-1,idx+d))*H,behavior:'smooth'})}}}
 let G=null;
@@ -132,7 +152,8 @@ app.innerHTML=`<div class=top><button class=link id=how><svg class="svgi" viewBo
 <div class=panel><h2>Players</h2><div id=pl></div><button id=add><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Add player</button></div>
 <div class=panel><h2>Prompts</h2><div class=row id=cats></div></div>
 <div class=panel><h2>Rounds</h2><div id=rd class=wheel></div></div>
-<button class=primary id=go>Start game</button>`;
+<button class=primary id=go>Start game</button>
+<details class="more-games"><summary>More games</summary><a href="https://infinityxxxxx.github.io/imposter/">Imposter</a><a href="https://infinityxxxxx.github.io/would-you-rather/">Would You Rather</a><a href="https://infinityxxxxx.github.io/shes-a-10-but/">She's a 10, but...</a><a href="https://infinityxxxxx.github.io/hot-take-spectrum/">Hot Take Spectrum</a></details>`;
 const pl=$('#pl');const draw=()=>{pl.innerHTML=S.players.map((p,i)=>`<div class=prow style="margin-bottom:8px"><input type=text maxlength=14 placeholder="Player ${i+1}" value="${esc(p)}" data-i=${i}><button class=x data-r=${i} aria-label="Remove"><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>`).join('');
 pl.querySelectorAll('input').forEach(e=>e.oninput=()=>{S.players[e.dataset.i]=e.value;save();chk()});
 pl.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.players.splice(b.dataset.r,1);while(S.players.length<3)S.players.push('');save();draw();chk()});$('#add').disabled=S.players.length>=12};
@@ -152,8 +173,8 @@ function settings(){app.innerHTML=`<div class=top><button class=link id=bk>← B
 <div class=panel><h2>Voting</h2><button class=chip id=sf aria-pressed=${S.self}>Allow voting for yourself: ${S.self?'on':'off'}</button></div>`;
 $('#bk').onclick=home;document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.theme=b.dataset.t;save();applyTheme();settings()});
 $('#sf').onclick=()=>{S.self=!S.self;save();settings()};
-$('#snd').onchange=e=>{S.sound=e.target.checked;save();ensureAudio();sfx.tick()};$('#vib').onchange=e=>{S.vibe=e.target.checked;save();buzz(20)};$('#vol').oninput=e=>{S.vol=+e.target.value};$('#vol').onchange=()=>{save();ensureAudio();sfx.tick()}}
-function start(){ensureAudio();sfx.start();buzz(15);const players=S.players.map((s,i)=>s.trim()||"Player "+(i+1));
+$('#snd').onchange=e=>{S.sound=e.target.checked;save();ensureAudio();sfx.tick()};$('#vib').onchange=e=>{S.vibe=e.target.checked;save();buzz(BUZZ.lock)};$('#vol').oninput=e=>{S.vol=+e.target.value};$('#vol').onchange=()=>{save();ensureAudio();sfx.tick()}}
+function start(){ensureAudio();sfx.start();buzz(BUZZ.lock);const players=S.players.map((s,i)=>s.trim()||"Player "+(i+1));
 let pool=[];for(const c of Object.keys(S.cats))if(S.cats[c])pool=pool.concat(PROMPTS[c]);
 pool=shuffle(pool).slice(0,Math.min(S.rounds,pool.length));
 G={players,pool,i:0,voter:0,votes:[],score:players.map(()=>0)};prompt_()}
@@ -161,25 +182,25 @@ function scoreBar(){return `<div class=score>${G.players.map((p,i)=>`<span>${esc
 function topBar(){return `<div class=top><span class=dim>Round ${G.i+1} / ${G.pool.length}</span><button class=link id=quit>End game</button></div>`}
 function hookQuit(){const q=$('#quit');if(q)q.onclick=()=>{if(confirm('End the game?'))final()}}
 function prompt_(){G.voter=0;G.votes=[];
-app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Who's most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><p class=dim>Pass the phone. Vote in secret.</p></div><button class=primary id=nx>Start voting</button>${scoreBar()}`;hookQuit();$('#nx').onclick=()=>{sfx.pass();buzz(12);ballot()}}
+app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Who's most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><p class=dim>Pass the phone. Vote in secret.</p></div><button class=primary id=nx>Start voting</button>${scoreBar()}`;hookQuit();$('#nx').onclick=()=>{sfx.card();buzz(BUZZ.card);ballot()}}
 function ballot(){const p=G.players[G.voter];
 app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Most likely to...</div><div class=lead>${esc(G.pool[G.i])}?</div><div class=dim>${esc(p)}, tap your pick</div></div>
 <div class=names>${G.players.map((n,i)=>`<button style=--d:${i} data-v=${i} ${!S.self&&i===G.voter?'disabled':''}>${esc(n)}</button>`).join('')}</div><p class=dim style="text-align:center">Voter ${G.voter+1} of ${G.players.length}</p>`;hookQuit();
-document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{sfx.vote();buzz([10,30,10]);G.votes.push(+b.dataset.v);G.voter++;G.voter<G.players.length?handoff():reveal()})}
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{sfx.lock();buzz(BUZZ.lock);G.votes.push(+b.dataset.v);G.voter++;G.voter<G.players.length?handoff():reveal()})}
 function handoff(){app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Vote locked in. Pass the phone to</div><div class=big>${esc(G.players[G.voter])}</div></div><button class=primary id=nx>I'm ${esc(G.players[G.voter])}, show me</button>`;hookQuit();$('#nx').onclick=ballot}
 function reveal(){const t=tally(G.votes,G.players),w=winners(t);w.forEach(i=>G.score[i]++);
 const order=t.map((n,i)=>i).sort((a,b)=>t[b]-t[a]);const mx=Math.max(1,...t);
 const who=w.length===1?`${esc(G.players[w[0]])} it is!`:`${w.map(i=>esc(G.players[i])).join(' & ')} tied!`;
 app.innerHTML=`${topBar()}<div class="stage enter"><div class=dim>Most likely to ${esc(G.pool[G.i])}</div><div class=big>${who}</div>
 <div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${t[i]/mx*100}%;--d:${order.indexOf(i)}"></i><b>${t[i]}</b></div>`).join('')}</div></div>
-<button class=primary id=nx>${G.i+1<G.pool.length?'Next prompt':'Final results'}</button>${scoreBar()}`;hookQuit();sfx.reveal();buzz([20,40,40]);
+<button class=primary id=nx>${G.i+1<G.pool.length?'Next prompt':'Final results'}</button>${scoreBar()}`;hookQuit();sfx.reveal();buzz(BUZZ.reveal);
 $('#nx').onclick=()=>{if(G.i+1<G.pool.length){G.i++;prompt_()}else final()}}
 function final(){const m=Math.max(...G.score);const order=G.score.map((n,i)=>i).sort((a,b)=>G.score[b]-G.score[a]);
 const w=G.score.map((n,i)=>n===m&&m>0?i:-1).filter(i=>i>=0);
 app.innerHTML=`<h1>Game over</h1><div class="stage enter"><div class=dim>Most "likely to" overall</div><div class=big>${w.length?w.map(i=>esc(G.players[i])).join(' & '):'Nobody!'}</div>
 <div class=panel>${order.map(i=>`<div class="bar ${w.includes(i)?'win':''}"><span>${esc(G.players[i])}</span><i style="width:${m?G.score[i]/m*100:0}%;--d:${order.indexOf(i)}"></i><b>${G.score[i]}</b></div>`).join('')}</div></div>
-<button class=primary id=ag>Play again</button><button id=hm>Home</button>`;
-sfx.win();buzz([30,50,30,50,80]);$('#ag').onclick=start;$('#hm').onclick=home}
+<button class=primary id=ag>Play again</button><button id=hm>Home</button><details class="more-games"><summary>More games</summary><a href="https://infinityxxxxx.github.io/imposter/">Imposter</a><a href="https://infinityxxxxx.github.io/would-you-rather/">Would You Rather</a><a href="https://infinityxxxxx.github.io/shes-a-10-but/">She's a 10, but...</a><a href="https://infinityxxxxx.github.io/hot-take-spectrum/">Hot Take Spectrum</a></details>`;
+sfx.win();buzz(BUZZ.win);$('#ag').onclick=start;$('#hm').onclick=home}
 home();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
