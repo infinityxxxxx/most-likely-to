@@ -5,6 +5,7 @@
 <meta name="description" content="Most Likely To... A party game for one shared phone. Works offline.">
 <title>Most Likely To...</title>
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 :root{color-scheme:dark;--bg:#0f1220;--panel:#1b2036;--text:#f2f4ff;--dim:#9aa3c7;--accent:#ff4d6d;--gold:#ffd166;--ok:#4dd6a4;--line:#2c3354;--on:#fff;--out:cubic-bezier(.2,.8,.2,1)}
 [data-theme=ocean]{--bg:#06202e;--panel:#0d3347;--text:#eaf8ff;--dim:#8fb8cc;--accent:#14b8e6;--ok:#5eead4;--line:#17506b}
@@ -19,16 +20,16 @@ html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:1
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 button{font:inherit;color:var(--text);border:0;border-radius:14px;padding:14px;cursor:pointer;touch-action:manipulation;transition:transform 150ms var(--out),opacity .2s;background:var(--panel)}
 button:active:not(:disabled){transform:scale(.97)}
-button:disabled{opacity:.35;cursor:default}
+button:disabled{opacity:.45;cursor:not-allowed;filter:saturate(.25)}
 input[type=text]{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%;min-width:0;-webkit-user-select:text;user-select:text}
 select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%}
 main{max-width:520px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;min-height:100vh;min-height:100dvh}
-h1{margin:6px 0 0;font-size:30px;line-height:1.1;text-align:center}
+h1{margin:6px 0 0;font-size:30px;line-height:1.1;text-align:center;font-family:var(--display);letter-spacing:-.02em}
 h1 b{color:var(--accent)}
 h2{margin:0;font-size:15px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .sub{text-align:center;color:var(--dim);margin:0}
 .panel{background:var(--panel);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
-.primary{background:var(--accent);color:var(--on);font-weight:700;padding:16px}
+.primary{background:var(--accent);color:var(--on);font-weight:700;padding:16px;font-family:var(--display)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .chip{padding:9px 13px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:15px}
 .chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on);font-weight:600}
@@ -37,33 +38,33 @@ h2{margin:0;font-size:15px;color:var(--dim);font-weight:600;text-transform:upper
 .stage.enter>*:nth-child(2){animation-delay:70ms}.stage.enter>*:nth-child(3){animation-delay:140ms}.stage.enter>*:nth-child(4){animation-delay:210ms}
 .stage.enter .big{animation:pop 520ms cubic-bezier(.34,1.56,.64,1) 120ms both}
 @keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
-@keyframes grow{from{width:0}}
-.bar i{animation:grow 650ms var(--out) both;animation-delay:calc(var(--d,0)*90ms + 250ms)}
+@keyframes grow{from{transform:scaleX(0)}}
+.bar i{transform-origin:left;animation:grow 650ms var(--out) both;animation-delay:calc(var(--d,0)*90ms + 250ms)}
 .names button{animation:in 300ms var(--out) both;animation-delay:calc(var(--d,0)*45ms)}
 .panel,.primary{animation:in 300ms var(--out) both}
 .tog{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--line);padding:14px;border-radius:12px;cursor:pointer;transition:transform 150ms var(--out)}
 .tog:active{transform:scale(.98)}
 .tog input{width:24px;height:24px;margin:0;flex:none;accent-color:var(--accent);cursor:pointer}
 input[type=range]{width:100%;accent-color:var(--accent);padding:0;border:0;background:none}
-@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.lead{font-size:27px;font-weight:700;line-height:1.2}
-.big{font-size:42px;font-weight:800;color:var(--gold);line-height:1.1}
+.lead{font-size:27px;font-weight:700;line-height:1.2;font-family:var(--display);letter-spacing:-.02em}
+.big{font-size:42px;font-weight:800;color:var(--gold);line-height:1.1;font-family:var(--display);letter-spacing:-.02em}
 .dim{color:var(--dim);font-size:15px}
 .top{display:flex;justify-content:space-between;align-items:center}
 .link{background:none;color:var(--dim);padding:8px 4px}
 .score{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.score span{background:var(--panel);border-radius:999px;padding:5px 12px;font-size:14px}
+.score span{background:var(--panel);border-radius:999px;padding:5px 12px;font-size:14px;font-variant-numeric:tabular-nums}
 .x{background:none;padding:0 2px;color:var(--dim)}
 .prow{display:flex;gap:8px;align-items:center}
 .names{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.names button{padding:18px 8px;font-size:19px;font-weight:600;border:1px solid var(--line)}
+.names button{padding:18px 8px;font-size:19px;font-weight:600;border:1px solid var(--line);font-family:var(--display)}
 .names button:disabled{opacity:.25}
 .bar{display:grid;grid-template-columns:90px 1fr 28px;gap:8px;align-items:center;text-align:left;font-size:16px}
-.bar i{display:block;height:20px;border-radius:10px;background:var(--accent);min-width:4px;transition:width .6s var(--out)}
+.bar i{display:block;height:20px;border-radius:10px;background:var(--accent);min-width:4px}
 .bar.win i{background:var(--gold)}
 .bar.win b{color:var(--gold)}
-.bar b{text-align:right}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
 .bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wheel{position:relative;height:132px;margin:0 auto;width:140px}
 .wheel:before{content:"";position:absolute;left:0;right:0;top:44px;height:44px;border-radius:12px;background:var(--bg);border:1px solid var(--accent);pointer-events:none}
@@ -71,9 +72,20 @@ input[type=range]{width:100%;accent-color:var(--accent);padding:0;border:0;backg
 .wheel ul{list-style:none;margin:0;padding:44px 0;height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;position:relative;z-index:1;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
 .wheel ul::-webkit-scrollbar{display:none}
 .wheel li{height:44px;line-height:44px;text-align:center;font-size:22px;color:var(--dim);scroll-snap-align:center;scroll-snap-stop:always;cursor:pointer;transition:color .15s,font-size .15s}
-.wheel li.sel{color:var(--text);font-weight:800;font-size:28px}
+.wheel li.sel{color:var(--text);font-weight:800;font-size:28px;font-family:var(--display)}
 .how{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
 .how li{animation:in 300ms var(--out) both;animation-delay:calc(var(--i)*60ms)}
+/* polish kit 2026-11 */
+@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-display:swap;src:url("fonts/bricolage-grotesque-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-display:swap;src:url("fonts/bricolage-grotesque-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+:root{--display:"Bricolage Grotesque",system-ui,sans-serif}
+html,body{overflow-x:clip}
+body{-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:var(--on,#fff)}
+input,textarea{caret-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html{scrollbar-color:var(--line) transparent}
+.svgi{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
 </style></head>
 <body><main id="app"></main>
 <script>
@@ -115,13 +127,13 @@ ul.onclick=e=>{const li=e.target.closest('li');if(li)ul.scrollTo({top:[...ul.chi
 ul.onkeydown=e=>{const d=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0;if(d){e.preventDefault();ul.scrollTo({top:Math.max(0,Math.min(vals.length-1,idx+d))*H,behavior:'smooth'})}}}
 let G=null;
 function home(){applyTheme();G=null;
-app.innerHTML=`<div class=top><button class=link id=how>How to Play</button><button class=link id=set>⚙ Settings</button></div>
+app.innerHTML=`<div class=top><button class=link id=how><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg> How to Play</button><button class=link id=set><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Settings</button></div>
 <h1>Most Likely <b>To...</b></h1><p class=sub>One shared phone. Everyone votes in secret, then the group is exposed.</p>
-<div class=panel><h2>Players</h2><div id=pl></div><button id=add>+ Add player</button></div>
+<div class=panel><h2>Players</h2><div id=pl></div><button id=add><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Add player</button></div>
 <div class=panel><h2>Prompts</h2><div class=row id=cats></div></div>
 <div class=panel><h2>Rounds</h2><div id=rd class=wheel></div></div>
 <button class=primary id=go>Start game</button>`;
-const pl=$('#pl');const draw=()=>{pl.innerHTML=S.players.map((p,i)=>`<div class=prow style="margin-bottom:8px"><input type=text maxlength=14 placeholder="Player ${i+1}" value="${esc(p)}" data-i=${i}><button class=x data-r=${i} aria-label="Remove">✕</button></div>`).join('');
+const pl=$('#pl');const draw=()=>{pl.innerHTML=S.players.map((p,i)=>`<div class=prow style="margin-bottom:8px"><input type=text maxlength=14 placeholder="Player ${i+1}" value="${esc(p)}" data-i=${i}><button class=x data-r=${i} aria-label="Remove"><svg class="svgi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>`).join('');
 pl.querySelectorAll('input').forEach(e=>e.oninput=()=>{S.players[e.dataset.i]=e.value;save();chk()});
 pl.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.players.splice(b.dataset.r,1);while(S.players.length<3)S.players.push('');save();draw();chk()});$('#add').disabled=S.players.length>=12};
 const chk=()=>$('#go').disabled=names().length<3||!Object.values(S.cats).some(Boolean);
